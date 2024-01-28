@@ -16,17 +16,54 @@ db.init_app(app)
 
 @app.route('/')
 def index():
-    return make_response(
-        '<h1>Welcome to the pet directory!</h1>',
-        200
-    )
+    body = {'message': 'Welcome to the pet directory!'}
+    return make_response(body, 200)
 
 
 @app.route('/demo_json')
 def demo_json():
-    pet_json = '{"id": 1, "name" : "Fido", "species" : "Dog"}'
-    return make_response(pet_json, 200)
+    pet = Pet.query.first()
+    pet_dict = {'id': pet.id,
+                'name': pet.name,
+                'species': pet.species}
+    
+    return make_response(pet_dict, 200)
 
+@app.route('/pets/<int:id>')
+def pet_by_id(id):
+    pet = Pet.query.filter(Pet.id == id).first()
+
+    if pet:
+        body = {
+            'id': pet.id,
+            'name': pet.name,
+            'species': pet.species
+        }
+        status = 200
+    else:
+        body = {'message': f'Pet {id} does not exist'}
+        status = 404
+
+    response = make_response(body, status)
+    return response
+
+@app.route('/species/<string:species>')
+def pet_by_species(species):
+    pets_list = []
+
+    pets = Pet.query.filter_by(species = species).all()
+    for pet in pets:
+        pet_dict = {
+            'id': pet.id,
+            'name': pet.name,
+            'species': pet.species
+        }
+        pets_list.append(pet_dict)
+    
+    body = {'count': len(pets_list),
+            'pets': pets_list}
+
+    return make_response(body, 200)
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
